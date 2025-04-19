@@ -1,0 +1,9 @@
+/* minimal “Apple‑esque” dark theme */
+:root { --bg:#0d1117; --accent:#2563eb; --fg:#fff; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--fg);}
+#chat { max-width:60ch; margin:auto; padding:2rem; height:90vh; overflow:auto;}
+.bubble { padding:.8rem 1.1rem; border-radius:12px; margin:.4rem 0; line-height:1.4;}
+.user { background:var(--accent); color:#fff; }
+.bot  { background:#1f242d; }
+#mic { position:fixed; bottom:1rem; right:1rem; font-size:2rem; cursor:pointer;}
