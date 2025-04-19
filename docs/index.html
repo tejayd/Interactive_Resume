@@ -2,17 +2,138 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Chat with Teja — Interactive Portfolio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teja — Data & AI Engineer</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main id="chat"></main>
+  <div class="wave-bg"></div>
+  <nav>
+    <div class="nav-links">
+      <a href="#about">About</a>
+      <a href="#skills">Skills</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </nav>
 
-  <template id="bubble"><div class="bubble"></div></template>
+  <header class="hero">
+    <h1>Hi, I'm Teja</h1>
+    <div class="profile-section">
+      <div class="profile-image">
+        <img src="teja.png" alt="Teja" />
+      </div>
+      <h2>Data & AI Engineer</h2>
+    </div>
+    <div class="hero-controls">
+      <button class="cta-button" id="chat-trigger">Tell me about Teja</button>
+      <div class="button-controls">
+        <button id="mic" class="mic-button">🎤</button>
+        <button id="stop-speech" class="stop-button">🔇</button>
+      </div>
+    </div>
+  </header>
 
-  <div id="mic">🎤</div>
+  <section id="about" class="about-section">
+    <div class="about-container">
+      <h3>About This Project</h3>
+      <div class="about-content">
+        <p>
+          <span class="emoji"></span> Ever wished you could just <em>talk</em> to someone's resume instead of reading it? Well, now you can!
+        </p>
+        <p>
+          This interactive portfolio is powered by a <strong>Retrieval-Augmented Generation (RAG)</strong> system that brings my resume to life. It's like having a conversation with my CV over coffee, minus the awkward small talk!
+        </p>
+        <p>
+          <span class="emoji"></span> Ask me anything about my experience, skills, or projects using your voice or text. The system smartly fetches the most relevant parts of my resume and crafts a personalized response just for you.
+        </p>
+        <div class="tech-stack">
+          <h4>Under the Hood:</h4>
+          <div class="tech-items">
+            <div class="tech-item"><span class="tech-icon"></span> ChromaDB for vector storage</div>
+            <div class="tech-item"><span class="tech-icon"></span> Google Gemini for natural responses</div>
+            <div class="tech-item"><span class="tech-icon"></span> Web Speech API for voice interactions</div>
+            <div class="tech-item"><span class="tech-icon"></span> FastAPI & Python for backend magic</div>
+          </div>
+        </div>
+        <p class="fun-fact">
+          <span class="emoji">💡</span> <strong>Fun fact:</strong> This project doesn't just answer questions—it literally gives my resume a voice!
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills" class="skills-section">
+    <h3>Skills</h3>
+    <div class="skills-container">
+      <div class="skill-category">
+        <h4>Languages</h4>
+        <div class="skill-list">
+          <div class="skill-item">Python</div>
+          <div class="skill-item">SQL</div>
+          <div class="skill-item">JavaScript</div>
+        </div>
+      </div>
+      
+      <div class="skill-category">
+        <h4>Tools & Technologies</h4>
+        <div class="skill-list">
+          <div class="skill-item">Apache Spark</div>
+          <div class="skill-item">LangGraph + Ollama</div>
+          <div class="skill-item">SSIS</div>
+          <div class="skill-item">ETL/ELT Pipelines</div>
+        </div>
+      </div>
+      
+      <div class="skill-category">
+        <h4>Cloud Platforms</h4>
+        <div class="skill-list">
+          <div class="skill-item">AWS Glue</div>
+          <div class="skill-item">Snowflake</div>
+          <div class="skill-item">AWS Services</div>
+        </div>
+      </div>
+      
+      <div class="skill-category">
+        <h4>AI & Machine Learning</h4>
+        <div class="skill-list">
+          <div class="skill-item">LLM Orchestration</div>
+          <div class="skill-item">Vector Databases</div>
+          <div class="skill-item">Embeddings</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="resume" class="resume-section">
+    <h3>My Resume</h3>
+    <div class="pdf-container">
+      <div class="pdf-controls">
+        <button id="prev-page" class="page-nav-btn">◀ Previous</button>
+        <span id="page-num">Page: <span id="page-current">1</span> / <span id="page-total">1</span></span>
+        <button id="next-page" class="page-nav-btn">Next ▶</button>
+      </div>
+      <div class="pdf-viewer">
+        <canvas id="pdf-render"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <div class="chat-container" id="chat-container">
+    <div class="chat-header">
+      <span>Chat with Teja's Resume</span>
+      <button id="hide-chat" class="hide-button">✕</button>
+    </div>
+    <main id="chat"></main>
+    <template id="bubble"><div class="bubble"></div></template>
+    <div class="input-area">
+      <input type="text" id="chat-input" placeholder="Ask me anything...">
+      <button id="send-button">Send</button>
+    </div>
+  </div>
 
   <script type="module" src="type.js"></script>
   <script type="module" src="chat.js"></script>
+  <script src="lib/pdf.min.js"></script>
+  <script src="resume.js"></script>
 </body>
 </html>
