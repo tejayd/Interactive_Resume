@@ -15,10 +15,9 @@ An AI-powered interactive resume chatbot that allows users to ask questions abou
 pip install -r requirements.txt
 ```
 
-2. Create a `.env` file with your API keys:
+2. Create a `.env` file with your API key:
 ```
 GEMINI_API_KEY=your_gemini_api_key_here
-HF_KEY=your_huggingface_api_key_here
 ```
 
 3. Embed your resume:
@@ -36,6 +35,6 @@ python app.py
 ## Technologies Used
 - Python (FastAPI, ChromaDB)
 - Google Gemini AI
-- HuggingFace Embeddings
+- Sentence Transformers (for local embeddings)
 - JavaScript (Speech Recognition API)
 - HTML/CSS
