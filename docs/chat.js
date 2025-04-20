@@ -1,210 +1,192 @@
-// Update this URL with your actual Cloud Run URL after deployment
-const CLOUD_RUN_URL = "https://interactive-resume-874080876766.us-central1.run.app";
-const API = location.hostname === "localhost" ? "http://localhost:8080/ask" : `${CLOUD_RUN_URL}/ask`;
-const chat = document.getElementById("chat");
-const mic = document.getElementById("mic");
-const stopSpeech = document.getElementById("stop-speech");
-const chatContainer = document.getElementById("chat-container");
-const chatTrigger = document.getElementById("chat-trigger");
-const synth = speechSynthesis;
+document.addEventListener("DOMContentLoaded", () => {
+  const CLOUD_RUN_URL = "https://interactive-resume-874080876766.us-central1.run.app";
+  const API = location.hostname === "localhost" ? "http://localhost:8080/ask" : `${CLOUD_RUN_URL}/ask`;
+  const chat = document.getElementById("chat");
+  const mic = document.getElementById("mic");
+  const stopSpeech = document.getElementById("stop-speech");
+  const chatContainer = document.getElementById("chat-container");
+  const chatTrigger = document.getElementById("chat-trigger");
+  const synth = speechSynthesis;
 
-// Track the microphone state before speech started
-let wasListeningBeforeSpeech = false;
+  let wasListeningBeforeSpeech = false;
 
-// Get references to new elements
-const chatInput = document.getElementById("chat-input");
-const sendButton = document.getElementById("send-button");
-const hideChat = document.getElementById("hide-chat");
-const chatHeader = document.querySelector(".chat-header");
+  const chatInput = document.getElementById("chat-input");
+  const sendButton = document.getElementById("send-button");
+  const hideChat = document.getElementById("hide-chat");
+  const chatHeader = document.querySelector(".chat-header");
 
-// Initialize chat and handle chat trigger
-chatTrigger.addEventListener("click", () => {
-  chatContainer.classList.add("active");
-  if (!chat.hasChildNodes()) {
-    greet(); // Initial greeting only if chat is empty
-    
-    // After a short delay to allow greeting to finish, automatically ask about experience
-    setTimeout(() => {
+  chatTrigger.addEventListener("click", () => {
+    chatContainer.classList.add("active");
+    if (!chat.hasChildNodes()) {
+      greet();
+      setTimeout(() => {
+        ask("Tell me about Teja's experience");
+      }, 1500);
+    } else {
       ask("Tell me about Teja's experience");
-    }, 1500);
-  } else {
-    // If chat is already active, just ask about experience
-    ask("Tell me about Teja's experience");
-  }
-});
+    }
+  });
 
-// Click outside chat container to close
-document.addEventListener("click", (e) => {
-  if (!chatContainer.contains(e.target) && !chatTrigger.contains(e.target)) {
+  document.addEventListener("click", (e) => {
+    if (!chatContainer.contains(e.target) && !chatTrigger.contains(e.target)) {
+      chatContainer.classList.remove("active");
+    }
+  });
+
+  hideChat.addEventListener("click", () => {
     chatContainer.classList.remove("active");
-  }
-});
+  });
 
-// Handle hide chat button click
-hideChat.addEventListener("click", () => {
-  chatContainer.classList.remove("active");
-});
+  chatHeader.addEventListener("click", (e) => {
+    if (e.target === chatHeader || e.target.tagName === "SPAN") {
+      chatContainer.classList.toggle("active");
+    }
+  });
 
-// Make chat header toggle chat visibility when clicked
-chatHeader.addEventListener("click", (e) => {
-  // Only toggle if the click was directly on the header or its span element
-  // and not on the hide button (to avoid conflicts with the hide button)
-  if (e.target === chatHeader || e.target.tagName === "SPAN") {
-    chatContainer.classList.toggle("active");
-  }
-});
-
-// Stop speech synthesis when stop button is clicked
-stopSpeech.addEventListener("click", () => {
-  if (synth.speaking) {
-    synth.cancel();
-    stopSpeech.classList.add("active");
-    // Reset button color after a brief delay to give visual feedback
-    setTimeout(() => {
-      stopSpeech.classList.remove("active");
-    }, 300);
-  }
-});
-
-// Add speech start and end event listeners to manage button state
-synth.addEventListener('voiceschanged', () => {
-  // Initialize speech synthesis events
-  setupSpeechEvents();
-});
-
-function setupSpeechEvents() {
-  // This function sets up event listeners for speech synthesis
-  if (!window.speechSynthesisInitialized) {
-    window.speechSynthesisInitialized = true;
-    
-    // Make button red when speaking starts and disable microphone if it's active
-    speechSynthesis.addEventListener('start', () => {
+  stopSpeech.addEventListener("click", () => {
+    if (synth.speaking) {
+      synth.cancel();
       stopSpeech.classList.add("active");
+      setTimeout(() => {
+        stopSpeech.classList.remove("active");
+      }, 300);
+    }
+  });
+
+  synth.addEventListener('voiceschanged', () => {
+    setupSpeechEvents();
+  });
+
+  function setupSpeechEvents() {
+    if (!window.speechSynthesisInitialized) {
+      window.speechSynthesisInitialized = true;
+
+      speechSynthesis.addEventListener('start', () => {
+        stopSpeech.classList.add("active");
+        wasListeningBeforeSpeech = recognising;
+        if (recognising) stopListen();
+      });
+
+      speechSynthesis.addEventListener('end', () => {
+        stopSpeech.classList.remove("active");
+        if (wasListeningBeforeSpeech) {
+          startListen();
+          wasListeningBeforeSpeech = false;
+        }
+      });
+
+      speechSynthesis.addEventListener('error', () => {
+        stopSpeech.classList.remove("active");
+        if (wasListeningBeforeSpeech) {
+          startListen();
+          wasListeningBeforeSpeech = false;
+        }
+      });
+    }
+  }
+
+  let recognising = false, recog;
+  mic.onclick = () => recognising ? stopListen() : startListen();
+
+  function startListen() {
+    recog = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recog.lang = "en-US";
+    recog.onresult = e => ask(e.results[0][0].transcript);
+    recog.onend = () => recognising && recog.start();
+    recog.start();
+    recognising = true;
+    mic.textContent = "⏸️";
+  }
+
+  function stopListen() {
+    recognising = false;
+    recog.stop();
+    mic.textContent = "🎤";
+  }
+
+  async function ask(q) {
+    addBubble(q, "user");
+    try {
+      const response = await fetch(API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        mode: "cors",
+        body: JSON.stringify({question: q})
+      });
       
-      // Store current listening state and disable microphone if active
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const r = await response.json();
+      if (r.answer) {
+        speak(r.answer);
+      } else {
+        speak("Sorry, I couldn't process that request. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error fetching from API:", error);
+      speak("Sorry, I'm having trouble connecting to my backend. Please check the console for details.");
+    }
+  }
+
+  function addBubble(text, cls) {
+    const b = document.getElementById("bubble").content.cloneNode(true);
+    b.firstElementChild.textContent = text;
+    b.firstElementChild.classList.add(cls);
+    chat.append(b);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function greet() {
+    const msg = "Hi! I'm Teja's interactive portfolio. Ask me anything about his work.";
+    addBubble(msg, "bot");
+    synth.speak(new SpeechSynthesisUtterance(msg));
+  }
+
+  function speak(t) {
+    addBubble(t, "bot");
+    const utterance = new SpeechSynthesisUtterance(t);
+
+    utterance.onstart = () => {
+      stopSpeech.classList.add("active");
       wasListeningBeforeSpeech = recognising;
-      if (recognising) {
-        stopListen();
-      }
-    });
-    
-    // Return to green when speaking ends and restore microphone if it was active
-    speechSynthesis.addEventListener('end', () => {
+      if (recognising) stopListen();
+    };
+
+    utterance.onend = () => {
       stopSpeech.classList.remove("active");
-      
-      // Restore microphone state if it was active before speech started
       if (wasListeningBeforeSpeech) {
         startListen();
         wasListeningBeforeSpeech = false;
       }
-    });
-    
-    // Also handle speech errors
-    speechSynthesis.addEventListener('error', () => {
+    };
+
+    utterance.onerror = () => {
       stopSpeech.classList.remove("active");
-      
-      // Restore microphone state if it was active before speech started
       if (wasListeningBeforeSpeech) {
         startListen();
         wasListeningBeforeSpeech = false;
       }
-    });
+    };
+
+    synth.speak(utterance);
   }
-}
 
-let recognising = false, recog;
-mic.onclick = () => recognising ? stopListen() : startListen();
-
-function startListen() {
-  recog = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-  recog.lang = "en-US";
-  recog.onresult = e => ask(e.results[0][0].transcript);
-  recog.onend = () => recognising && recog.start();
-  recog.start(); 
-  recognising = true; 
-  mic.textContent = "⏸️";
-}
-
-function stopListen() { 
-  recognising = false; 
-  recog.stop(); 
-  mic.textContent = "🎤"; 
-}
-
-async function ask(q) {
-  addBubble(q, "user");
-  const r = await fetch(API, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({question: q})
-  }).then(r => r.json());
-  speak(r.answer);
-}
-
-function addBubble(text, cls) {
-  const b = document.getElementById("bubble").content.cloneNode(true);
-  b.firstElementChild.textContent = text;
-  b.firstElementChild.classList.add(cls);
-  chat.append(b);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function greet() {
-  const msg = "Hi! I'm Teja's interactive portfolio. Ask me anything about his work.";
-  addBubble(msg, "bot");
-  synth.speak(new SpeechSynthesisUtterance(msg));
-}
-
-function speak(t) {
-  addBubble(t, "bot");
-  const utterance = new SpeechSynthesisUtterance(t);
-  
-  // Set event handlers for this specific utterance
-  utterance.onstart = () => {
-    stopSpeech.classList.add("active");
-    
-    // Store current listening state and disable microphone if active
-    wasListeningBeforeSpeech = recognising;
-    if (recognising) {
-      stopListen();
+  sendButton.addEventListener("click", () => {
+    if (chatInput.value.trim() !== "") {
+      ask(chatInput.value.trim());
+      chatInput.value = "";
     }
-  };
-  
-  utterance.onend = () => {
-    stopSpeech.classList.remove("active");
-    
-    // Restore microphone state if it was active before speech started
-    if (wasListeningBeforeSpeech) {
-      startListen();
-      wasListeningBeforeSpeech = false;
-    }
-  };
-  
-  utterance.onerror = () => {
-    stopSpeech.classList.remove("active");
-    
-    // Restore microphone state if it was active before speech started
-    if (wasListeningBeforeSpeech) {
-      startListen();
-      wasListeningBeforeSpeech = false;
-    }
-  };
-  
-  synth.speak(utterance);
-}
+  });
 
-// Handle sending messages from the text input
-sendButton.addEventListener("click", () => {
-  if (chatInput.value.trim() !== "") {
-    ask(chatInput.value.trim());
-    chatInput.value = "";
-  }
-});
-
-// Also allow pressing Enter to send messages
-chatInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter" && chatInput.value.trim() !== "") {
-    ask(chatInput.value.trim());
-    chatInput.value = "";
-  }
+  chatInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter" && chatInput.value.trim() !== "") {
+      ask(chatInput.value.trim());
+      chatInput.value = "";
+    }
+  });
 });
