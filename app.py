@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
@@ -8,6 +8,8 @@ import chromadb
 from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
 import logging
+import shutil
+from typing import Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -66,6 +68,10 @@ except Exception as e:
 
 class Question(BaseModel):
     question: str
+
+# New model for admin authentication
+class AdminAuth(BaseModel):
+    admin_key: str
 
 @app.post("/ask")
 async def ask_question(question: Question):
@@ -140,6 +146,45 @@ Question: {question.question}"""
         logger.error(f"Error processing request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Add a new endpoint for updating the resume PDF
+@app.post("/update-resume")
+async def update_resume(file: UploadFile = File(...), auth: Optional[str] = None):
+    """
+    Upload a new resume PDF and regenerate the embeddings.
+    Requires an admin key for authentication.
+    """
+    # Simple authentication check - you should use a more secure method in production
+    admin_key = os.getenv("ADMIN_KEY", "your-secure-admin-key")
+    
+    if not auth or auth != admin_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    try:
+        # Save the new resume PDF
+        with open("resume.pdf", "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        logger.info("Resume PDF updated successfully")
+        
+        # Regenerate the embeddings
+        # This assumes your embed_resume.py can be imported and has a main() function
+        try:
+            from embed_resume import main as embed_resume_main
+            embed_resume_main()
+            logger.info("Resume embeddings regenerated successfully")
+            return {"message": "Resume updated and embeddings regenerated successfully"}
+        except Exception as embed_error:
+            logger.error(f"Error regenerating embeddings: {str(embed_error)}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Resume PDF updated but failed to regenerate embeddings: {str(embed_error)}"
+            )
+    except Exception as e:
+        logger.error(f"Error updating resume: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update resume: {str(e)}")
+    finally:
+        file.file.close()
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8787)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

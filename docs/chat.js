@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const CLOUD_RUN_URL = "https://interactive-resume-874080876766.us-central1.run.app";
+  const CLOUD_RUN_URL = "https://interactive-resume-le3rzelmka-uc.a.run.app";
   const API = location.hostname === "localhost" ? "http://localhost:8080/ask" : `${CLOUD_RUN_URL}/ask`;
   const chat = document.getElementById("chat");
   const mic = document.getElementById("mic");
