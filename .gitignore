@@ -18,3 +18,17 @@ chroma_db/
 # OS
 .DS_Store
 Thumbs.db
+
+# Backend files not needed for GitHub Pages
+/resume.pdf
+/cloudbuild.yaml
+/Dockerfile
+
+# Ignore ChromaDB files
+/chroma_db/
+
+# Python virtual environment
+/venv/
+__pycache__/
+*.py[cod]
+*$py.class
