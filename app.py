@@ -171,7 +171,15 @@ async def update_resume(file: UploadFile = File(...), auth: Optional[str] = None
         try:
             from embed_resume import main as embed_resume_main
             embed_resume_main()
-            logger.info("Resume embeddings regenerated successfully")
+            
+            # Refresh the collection reference after updating
+            global collection
+            collection = client.get_collection(
+                name="resume",
+                embedding_function=sentence_transformer_ef
+            )
+            
+            logger.info("Resume embeddings regenerated successfully and collection reference updated")
             return {"message": "Resume updated and embeddings regenerated successfully"}
         except Exception as embed_error:
             logger.error(f"Error regenerating embeddings: {str(embed_error)}")
